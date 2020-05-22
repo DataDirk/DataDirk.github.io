@@ -10,4 +10,6 @@
 
 [Link to the Shiny App](https://datadirk.shinyapps.io/QuakeVisualization/).
 
+## Reproducible Research Course Project
+[Link to the Reproducible Research Course Project](./rr_project/rr_project.html).  
 
