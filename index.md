@@ -1,5 +1,3 @@
-# DataDirk.github.io
-
 # Coursera Data Science Specialization Course Projects
 
 ## Practical Machine Learning Course Project
