@@ -6,6 +6,7 @@
 [Link to the Practical Machine Learning Course Project](./pml_project/pml_report.html).
 
 ## Developing Data Products Course Project
-[Link to the Earthquake Visualization Shiny App](https://datadirk.shinyapps.io/QuakeVisualization/).
+[Link to the Earthquake Visualization Project](https://rpubs.com/DataDirk/QuakeVisualization)
+[Link to the Shiny App](https://datadirk.shinyapps.io/QuakeVisualization/).
 
 
