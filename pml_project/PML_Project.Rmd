@@ -17,6 +17,9 @@ library(caret)
 library(rpart)
 library(rattle)
 library(randomForest)
+
+library(parallel)
+library(doParallel)
 ```
 ## Background
 
@@ -80,7 +83,7 @@ There are no near-zero-variance variables in the resulting dataset. Any existing
 
 
 Next, *trainingset* is partitioned into a training set and a test set using `createDataPartition`.
-```{r , echo=TRUE, warning=FALSE, results=FALSE, error=FALSE}
+```{r partition_dataset, echo=TRUE, warning=FALSE, results=FALSE, error=FALSE}
 set.seed(12345)
 
 inTrain <- createDataPartition(y=train2$classe, p=0.7, list=FALSE)
@@ -96,7 +99,7 @@ test_data <- train2[-inTrain,]
 ## Prediction with Classification Tree
 In a first step, a classification tree model is created using `rpart()` and the classification tree dendogram is plotted using `fancyRpartPlot()`.
 
-```{r , echo=TRUE}
+```{r build_PT, echo=TRUE}
 # create classification tree model from for variable classe in the training dataset
 modFit_PT <- rpart(classe ~ ., data=train_data, method="class")
 ```
@@ -117,17 +120,42 @@ cm_PT
 The resulting model has a **prediction accuracy** on the test dataset of **`r round(cm_PT[[3]][1]*100,1)`%**. Therefore, the **out-of-sample error** is (100 -  `r round(cm_PT[[3]][1]*100,1)`%) =  **`r round(100 - cm_PT[[3]][1]*100,1)`%**. So, more than 1 in 4 predictions is expected to be incorrect. 
 
 ## Prediction using Random Forest Trees
-In order to improve prediction accuracy, a random forest tree model is created using `randomForest()`. With increasing number of trees the errors drops until it plateaus above ~150 trees.  
+In order to improve prediction accuracy, a random forest tree model is created using `randomForest()`. Cross-validation is applied, the number of folds is limited to 5 and parallel processing used to reduce computation time. 
 
-```{r , echo=TRUE}
-#modFit_RF <- train(classe~ .,data=train_data, method="rf")
-modFit_RF <- randomForest(classe ~ ., data=train_data, importance=TRUE)
-plot(modFit_RF)
+```{r build_RF_model, echo=TRUE}
+
+# determine available clusters and enable
+cluster <- makeCluster(detectCores()- 1)
+registerDoParallel(cluster)
+
+
+modFit_RF <- train(
+  classe ~ ., 
+  train_data,
+  method = "rf",
+  trControl = trainControl(
+    method = "cv", 
+    number = 5,
+    verboseIter = TRUE,
+    allowParallel = TRUE
+  )
+)
+
+# stop parallel processing
+stopCluster(cluster)
+registerDoSEQ()
+
+```
+
+As shown in the plot, the value *mtry* = 2 provides highest accuracy and is thus used on the full training set
+```{r}
+plot(modFit_RF) 
 ```
 
 In order to validate the model *modFit_RF*, it is applied to the test dataset *test_data* and the accuracy of the prediction is determined using `confusionMatrix()`.
-```{r , echo=TRUE}
-predict_RF <- predict(modFit_RF, test_data, type = "class")
+```{r RF_predict, echo=TRUE}
+predict_RF <- predict(modFit_RF, test_data, )
+
 ```
 
 
@@ -142,7 +170,9 @@ With the random forest model giving such high accuracy, it is used to predict th
 
 ```{r , echo=TRUE}
 # Using modFit_RF to predict quiz results
-quiz_RF <- predict(modFit_RF, quizset, type = "class")
+#quiz_RF <- predict(modFit_RF, quizset, type = "class")
+quiz_RF <- predict(modFit_RF, quizset)
+
 quiz_RF
 ```
 
